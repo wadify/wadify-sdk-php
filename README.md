@@ -61,8 +61,7 @@ use Wadify\Client;
 
 // Instantiate the client.
 $apiKey = 'your-api-key';
-$secret = 'your-secret-token';
-$wadifyClient = new Client($apiKey, $secret, ['version' => 'latest']);
+$wadifyClient = new Client($apiKey, ['version' => 'latest']);
 ```
 
 #### Options
