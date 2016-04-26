@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.2 - 2016-04-26
+
+* phpunit 3.3.1 requires php >= 5.6 or 7.0
+
 ## 1.0.1 - 2016-04-26
 
 * Guzzle 6 only supports PHP >= 5.5
