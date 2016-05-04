@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.4 - 2016-05-04
+
+* Adding symfony/yaml dependency to composer
+
 ## 1.0.3 - 2016-04-26
 
 * Wrong Documentation 
