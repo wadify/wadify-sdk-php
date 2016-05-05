@@ -175,7 +175,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->mockClient
             ->expects($this->once())
             ->method('request')
-            ->with('POST', "/api/0.0.1/transactions", ['headers' => $this->headers, 'form_params' => $data])
+            ->with('POST', "/api/0.0.1/transactions", ['headers' => $this->headers, 'json' => $data])
             ->willReturn($response);
 
         // Act.
