@@ -1,4 +1,4 @@
-# wadify-sdk-php - Version 1
+# wadify-sdk-php - Version 1.0.5
 
 [![@wadifytech on Twitter](http://img.shields.io/badge/twitter-%40wadifytech-blue.svg?style=flat)](https://twitter.com/wadifytech)
 [![Build Status](https://img.shields.io/travis/wadify/wadify-sdk-php.svg?style=flat)](https://travis-ci.org/wadify/wadify-sdk-php)
@@ -8,9 +8,8 @@ The **Wadify SDK for PHP** makes it easy for developers to access Wadify in thei
 ## Resources
 
 * **README file** – For both getting started and in-depth SDK usage information
-* **API DOCS** - For details about operations, parameters, and responses
-* [Issues][sdk-issues] – Report issues, submit pull requests, and get involved
-* [@wadifytech][sdk-twitter] – Follow us on Twitter
+* [Issues](https://github.com/wadify/wadify-sdk-php/issues) – Report issues, submit pull requests, and get involved
+* [@wadifytech](https://twitter.com/wadifytech) – Follow us on Twitter
 
 ## Features
 

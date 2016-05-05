@@ -102,7 +102,7 @@ class Client
      */
     public function createTransaction(array $data)
     {
-        return $this->request('POST', 'transactions', null, ['form_params' => $data]);
+        return $this->request('POST', 'transactions', null, ['json' => $data]);
     }
 
     /**

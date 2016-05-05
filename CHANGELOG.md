@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.0.5 - 2016-05-05
+
+* Use `json` guzzle option instead of `form_params`
+* Updating wrong README links
+
 ## 1.0.4 - 2016-05-04
 
 * Adding symfony/yaml dependency to composer
