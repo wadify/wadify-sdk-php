@@ -2,11 +2,17 @@ services:
   guzzle_client:
     class: GuzzleHttp\Client
     arguments:
-      - base_uri: 'http://staging.wadify.com'
-      - timeout: 2.0
+      config:
+        base_uri: 'http://127.0.0.1:8000'
+        retries: 4
+        timeout: '5.0'
+#      - base_uri:
+#      - base_uri: 'http://staging.wadify.com'
+#      - timeout: 2.0
 
   guzzle_client_sandbox:
     class: GuzzleHttp\Client
     arguments:
       - base_uri: 'http://sandbox.wadify.com'
+      - retries: 4
       - timeout: 2.0
