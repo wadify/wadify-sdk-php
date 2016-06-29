@@ -4,6 +4,7 @@ namespace Wadify\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 final class Container
@@ -27,16 +28,27 @@ final class Container
 
     /**
      * @param string $serviceName
+     * @param array  $addToArgument
      *
      * @return mixed
      */
-    public static function get($serviceName)
+    public static function get($serviceName, array $addToArgument = [])
     {
         if (self::$container === null) {
             self::load();
         }
         self::$container->compile();
 
+        if(!empty($addToArgument)){
+            $definition = self::$container->getDefinition($serviceName);
+            foreach ($addToArgument as $key => $value) {
+                $arguments = $definition->getArguments();
+                foreach ($value as $newKey => $newValue) {
+                    $arguments[$key][$newKey] = $newValue;
+                }
+                $definition->setArguments($arguments);
+            }
+        }
         return self::$container->get($serviceName);
     }
 
@@ -48,5 +60,7 @@ final class Container
     {
         self::load();
         self::$container->set($id, $service);
+        $definition = new Definition(get_class($service));
+        self::$container->setDefinition($id, $definition);
     }
 }

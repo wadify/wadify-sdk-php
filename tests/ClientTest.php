@@ -19,7 +19,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      * @var array
      */
     private $headers = [
-        'x-auth-apikey' => 'foo',
         'content-type' => 'application/json',
         'accept' => 'application/json',
     ];
@@ -188,10 +187,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $apiKey = 'foo';
+        $clientId = 'bar';
+        $clientSecret = 'foobar';
         $this->mockClient = $this->getMockBuilder('GuzzleHttp\Client')
             ->disableOriginalConstructor()
             ->getMock();
+
         Container::set('guzzle_client', $this->mockClient);
-        $this->client = new Client($apiKey, []);
+        $this->client = new Client($apiKey, $clientId, $clientSecret, []);
     }
 }

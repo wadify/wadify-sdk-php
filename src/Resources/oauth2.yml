@@ -1,0 +1,9 @@
+services:
+    sainsburys.guzzle.oauth2.grant_type.refresh_token:
+        class: Sainsburys\Guzzle\Oauth2\GrantType\RefreshToken
+
+    sainsburys.guzzle.oauth2.middleware:
+        class: Sainsburys\Guzzle\Oauth2\Middleware
+
+    wadify.oauth2.grant_type.api_key:
+        class: Wadify\OAuth2\GrantType\ApiKey
