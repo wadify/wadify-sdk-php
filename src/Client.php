@@ -5,11 +5,20 @@ namespace Wadify;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\RequestOptions;
+use Sainsburys\Guzzle\Oauth2\GrantType\RefreshToken;
+use Sainsburys\Guzzle\Oauth2\Middleware\OAuthMiddleware;
 use Wadify\DependencyInjection\Container;
 use Wadify\Exception\WadifyAuthenticationException;
 use Wadify\Exception\WadifyAuthorizationException;
 use Wadify\Exception\WadifyBadRequestException;
+use Wadify\OAuth2\GrantType\ApiKey;
+use Wadify\Token\StorageProvider\FileSystemProvider;
+use Wadify\Token\StorageProvider\StorageProviderInterface;
+use Wadify\Token\Token;
+use Wadify\Token\TokenNotFoundException;
 
 class Client
 {
@@ -17,11 +26,6 @@ class Client
      * @var GuzzleClient
      */
     private $client;
-
-    /**
-     * @var string
-     */
-    private $apiKey;
 
     /**
      * @var string
@@ -34,29 +38,71 @@ class Client
     private $links = [];
 
     /**
+     * @var OAuthMiddleware
+     */
+    private $middleware;
+
+    /**
+     * @var StorageProviderInterface
+     */
+    private $tokenStorageProvider;
+
+    /**
+     * @var array
+     */
+    private $defaultOptions = [
+        'version' => '0.0.1',
+        'sandbox' => false,
+        'token' => [
+            'provider' => FileSystemProvider::class,
+            'args' => ['/tmp/wadify/token.json'],
+        ],
+    ];
+
+    /**
      * WadifyClient constructor.
      * Valid options:
+     *  - apiKey [REQUIRED]
+     *  - clientId [REQUIRED]
+     *  - clientSecret [REQUIRED]
      *  - version [default: latest stable version]
      *  - sandbox: [default: false]
+     *  - token: [
+     *      - provider: [default: Wadify\Token\StorageProvider\FileSystemProvider]
+     *      - args: [default: [/tmp/wadify/token.json]]
+     *    ]
      *
-     * @param string $apiKey
-     * @param array  $options
+     * @param array $options
      */
-    public function __construct($apiKey, array $options = array())
+    public function __construct(array $options = array())
     {
-        $this->apiKey = $apiKey;
-        $options = array_merge($this->getDefaultOptions(), $options);
+        $options = array_merge($this->defaultOptions, $options);
         $this->version = $options['version'];
         $guzzleClientServiceName = (false === $options['sandbox']) ? 'guzzle_client' : 'guzzle_client_sandbox';
-        $this->client = Container::get($guzzleClientServiceName);
+        $this->tokenStorageProvider = $this->getTokenStorageProviderFromOptions($options['token']);
+
+        $stack = HandlerStack::create();
+        $this->client = Container::get($guzzleClientServiceName, [
+            'config' => [
+                'handler' => $stack,
+                'auth' => 'oauth2',
+                'headers' => ['Accept' => 'application/json'],
+            ],
+        ]);
+
+        $this->pushStack($options, $stack);
     }
 
     /**
-     * @return array
+     * @param array $options
+     *
+     * @return StorageProviderInterface
      */
-    private function getDefaultOptions()
+    private function getTokenStorageProviderFromOptions(array $options)
     {
-        return ['version' => '0.0.1', 'sandbox' => false];
+        $reflectionClass = new \ReflectionClass($options['provider']);
+
+        return $reflectionClass->newInstanceArgs($options['args']);
     }
 
     /**
@@ -110,11 +156,7 @@ class Client
      */
     private function getDefaultHeaders()
     {
-        return [
-            'x-auth-apikey' => $this->apiKey,
-            'content-type' => 'application/json',
-            'accept' => 'application/json',
-        ];
+        return ['content-type' => 'application/json', 'accept' => 'application/json'];
     }
 
     /**
@@ -138,6 +180,7 @@ class Client
                 $this->links = $body['_links'];
                 unset($body['_links']);
             }
+            $this->tokenStorageProvider->set($this->getToken());
 
             return $body;
         } catch (ClientException $exception) {
@@ -179,5 +222,46 @@ class Client
             default:
                 return $e;
         }
+    }
+
+    /**
+     * @return Token
+     */
+    private function getToken()
+    {
+        return new Token(
+            $this->middleware->getAccessToken()->getToken(),
+            $this->middleware->getAccessToken()->getExpires()->getTimestamp(),
+            $this->middleware->getRefreshToken()->getToken()
+        );
+    }
+
+    /**
+     * @param array        $options
+     * @param HandlerStack $stack
+     */
+    private function pushStack($options, $stack)
+    {
+        $options = [
+            ApiKey::CONFIG_APIKEY => $options['apiKey'],
+            ApiKey::CONFIG_CLIENT_ID => $options['clientId'],
+            ApiKey::CONFIG_CLIENT_SECRET => $options['clientSecret'],
+            ApiKey::CONFIG_TOKEN_URL => '/oauth/v2/token',
+            ApiKey::CONFIG_AUTH_LOCATION => RequestOptions::BODY,
+        ];
+
+        $token = new ApiKey($this->client, $options);
+        $refreshToken = new RefreshToken($this->client, $options);
+        $this->middleware = new OAuthMiddleware($this->client, $token, $refreshToken);
+
+        try {
+            $token = $this->tokenStorageProvider->get();
+            $this->middleware->setAccessToken($token->getAccessToken(), null, $token->getExpires());
+            $this->middleware->setRefreshToken($token->getRefreshToken());
+        } catch (TokenNotFoundException $e) {
+        }
+
+        $stack->push($this->middleware->onBefore());
+        $stack->push($this->middleware->onFailure(5));
     }
 }
