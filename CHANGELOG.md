@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.0.6 - 2016-07-04
+
+* Implementing OAuth2 authentication
+* Adding file system token storage provider
+* Documentation update
+
 ## 1.0.5 - 2016-05-05
 
 * Use `json` guzzle option instead of `form_params`

@@ -2,11 +2,14 @@
 
 namespace Wadify\Test;
 
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
+use org\bovigo\vfs\vfsStream;
 use Wadify\Client;
 use Wadify\DependencyInjection\Container;
+use Wadify\Token\StorageProvider\FileSystemProvider;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -14,15 +17,6 @@ class ClientTest extends \PHPUnit_Framework_TestCase
      * @var Client
      */
     private $client;
-
-    /**
-     * @var array
-     */
-    private $headers = [
-        'x-auth-apikey' => 'foo',
-        'content-type' => 'application/json',
-        'accept' => 'application/json',
-    ];
 
     /**
      * @var \PHPUnit_Framework_MockObject_MockObject|\GuzzleHttp\Client
@@ -35,14 +29,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testGetUserThrowsWadifyBadRequestExceptionIf400()
     {
         // Arrange.
-        $response = new Response(400);
-        $request = new Request('bar', 'foo');
-        $clientException = new ClientException('foo', $request, $response);
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', "/api/0.0.1/user", ['headers' => $this->headers])
-            ->willThrowException($clientException);
+        $this->setClientWithMockedResponse([new Response(400)]);
 
         // Act.
         $this->client->getUser();
@@ -56,14 +43,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testGetUserThrowsWadifyBadRequestExceptionIf401()
     {
         // Arrange.
-        $response = new Response(401);
-        $request = new Request('bar', 'foo');
-        $clientException = new ClientException('foo', $request, $response);
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', "/api/0.0.1/user", ['headers' => $this->headers])
-            ->willThrowException($clientException);
+        $this->setClientWithMockedResponse([new Response(401)]);
 
         // Act.
         $this->client->getUser();
@@ -77,14 +57,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     public function testGetUserThrowsWadifyBadRequestExceptionIf403()
     {
         // Arrange.
-        $response = new Response(403);
-        $request = new Request('bar', 'foo');
-        $clientException = new ClientException('foo', $request, $response);
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', "/api/0.0.1/user", ['headers' => $this->headers])
-            ->willThrowException($clientException);
+        $this->setClientWithMockedResponse([new Response(403)]);
 
         // Act.
         $this->client->getUser();
@@ -96,12 +69,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         // Arrange.
         $expected = ['foo' => 'bar'];
-        $response = new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}');
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', "/api/0.0.1/user", ['headers' => $this->headers])
-            ->willReturn($response);
+        $this->setClientWithMockedResponse([
+            new Response(200, [], json_encode($expected)),
+            $this->getAuthTokenResponse(),
+        ]);
 
         // Act.
         $actual = $this->client->getUser();
@@ -114,12 +85,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
     {
         // Arrange.
         $expected = ['foo' => 'bar'];
-        $response = new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}');
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', "/api/0.0.1/transactions", ['headers' => $this->headers])
-            ->willReturn($response);
+        $this->setClientWithMockedResponse([
+            new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}'),
+            $this->getAuthTokenResponse(),
+        ]);
 
         // Act.
         $actual = $this->client->getTransactions();
@@ -133,12 +102,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         // Arrange.
         $id = 'foo-bar';
         $expected = ['foo' => 'bar'];
-        $response = new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}');
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('GET', "/api/0.0.1/transactions/{$id}", ['headers' => $this->headers])
-            ->willReturn($response);
+        $this->setClientWithMockedResponse([
+            new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}'),
+            $this->getAuthTokenResponse(),
+        ]);
 
         // Act.
         $actual = $this->client->getTransaction($id);
@@ -152,12 +119,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         // Arrange.
         $id = 'foo-bar';
         $expected = ['foo' => 'bar'];
-        $response = new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}');
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('PATCH', "/api/0.0.1/transactions/{$id}/abort", ['headers' => $this->headers])
-            ->willReturn($response);
+        $this->setClientWithMockedResponse([
+            new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}'),
+            $this->getAuthTokenResponse(),
+        ]);
 
         // Act.
         $actual = $this->client->abortTransaction($id);
@@ -171,12 +136,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         // Arrange.
         $expected = ['foo' => 'bar'];
         $data = [];
-        $response = new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}');
-        $this->mockClient
-            ->expects($this->once())
-            ->method('request')
-            ->with('POST', "/api/0.0.1/transactions", ['headers' => $this->headers, 'json' => $data])
-            ->willReturn($response);
+        $this->setClientWithMockedResponse([
+            new Response(200, [], '{"foo": "bar", "_links": {"rel1": {"href": "fake-uri"}}}'),
+            $this->getAuthTokenResponse(),
+        ]);
 
         // Act.
         $actual = $this->client->createTransaction($data);
@@ -185,13 +148,48 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $actual);
     }
 
+    /**
+     * @return Response
+     */
+    private function getAuthTokenResponse()
+    {
+        $datetime = new \DateTime('tomorrow');
+        $response = [
+            'access_token' => 'foo',
+            'token_type' => 'https://api.wadify.com/grants/apikey',
+            'expires' => $datetime->getTimestamp(),
+            'refresh_token' => 'foo-bar',
+        ];
+
+        return new Response(200, [], json_encode($response));
+    }
+
+    /**
+     * @param array $responses
+     */
+    protected function setClientWithMockedResponse(array $responses)
+    {
+        $mock = new MockHandler($responses);
+        $handler = HandlerStack::create($mock);
+        $this->mockClient = new GuzzleClient(['handler' => $handler]);
+
+        Container::set('guzzle_client', $this->mockClient);
+        $this->client = new Client([
+            'apiKey' => 'foo',
+            'clientId' => 'bar',
+            'clientSecret' => 'foo-bar',
+            'token' => [
+                'provider' => FileSystemProvider::class,
+                'args' => [vfsStream::url('test-wadify-client').'/token.json'],
+            ],
+        ]);
+    }
+
+    /**
+     *
+     */
     protected function setUp()
     {
-        $apiKey = 'foo';
-        $this->mockClient = $this->getMockBuilder('GuzzleHttp\Client')
-            ->disableOriginalConstructor()
-            ->getMock();
-        Container::set('guzzle_client', $this->mockClient);
-        $this->client = new Client($apiKey, []);
+        vfsStream::setup('test-wadify-client', 0777);
     }
 }
