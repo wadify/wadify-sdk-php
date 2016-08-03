@@ -3,12 +3,12 @@ services:
     class: GuzzleHttp\Client
     arguments:
       config:
-        timeout:   2.0
+        timeout:   10
         base_uri: 'http://staging.wadify.com'
 
   guzzle_client_sandbox:
     class: GuzzleHttp\Client
     arguments:
       config:
-        timeout:   2.0
+        timeout:   10
         base_uri: 'https://sandbox.wadify.com'

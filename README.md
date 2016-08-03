@@ -96,7 +96,7 @@ $client = new Client([
 
 #### Not required options
 
-* **version**: Block your desired api version. Ex. 0.0.1 or latest
+* **version**: Block your desired api version. Ex. v1 or latest
 * **sandbox**: true or false. If you want to use production or sandbox mode. Production by default
 * **token**: Token configuration array.
     * **provider**: Provider class string. By default we are using the _FileSystemProvider_
@@ -166,12 +166,7 @@ use Wadify\Token\StorageProvider\StorageProviderInterface;
 use Wadify\Token\Token;
 
 class CustomProvider implements StorageProviderInterface
-{
-    public function __construct(...) 
-    {
-    ...
-    }
-    
+{   
     public function get() 
     {
     ...
