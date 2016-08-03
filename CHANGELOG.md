@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.0.7 - 2016-08-02
+
+* Changing version in the url
+* Adding version to the accept header
+
 ## 1.0.6 - 2016-07-04
 
 * Implementing OAuth2 authentication

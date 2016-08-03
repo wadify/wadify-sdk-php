@@ -6,7 +6,6 @@ use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\RequestOptions;
 use Sainsburys\Guzzle\Oauth2\GrantType\RefreshToken;
 use Sainsburys\Guzzle\Oauth2\Middleware\OAuthMiddleware;
@@ -51,7 +50,7 @@ class Client
      * @var array
      */
     private $defaultOptions = [
-        'version' => '0.0.1',
+        'version' => '1',
         'sandbox' => false,
         'token' => [
             'provider' => FileSystemProvider::class,
@@ -76,6 +75,7 @@ class Client
      */
     public function __construct(array $options = array())
     {
+        $this->validateOptions($options);
         $options = array_merge($this->defaultOptions, $options);
         $this->version = $options['version'];
         $guzzleClientServiceName = (false === $options['sandbox']) ? 'guzzle_client' : 'guzzle_client_sandbox';
@@ -86,11 +86,34 @@ class Client
             'config' => [
                 'handler' => $stack,
                 'auth' => 'oauth2',
-                'headers' => ['Accept' => 'application/json'],
+                'headers' => ['Accept' => $this->getAcceptHeader()],
             ],
         ]);
 
         $this->pushStack($options, $stack);
+    }
+
+    /**
+     * @return string
+     */
+    private function getAcceptHeader()
+    {
+        return "application/json;version={$this->version}";
+    }
+
+    /**
+     * @param array $options
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function validateOptions(array $options)
+    {
+        $requiredOptions = array('apiKey', 'clientId', 'clientSecret');
+        foreach ($requiredOptions as $option) {
+            if (false === key_exists($option, $options)) {
+                throw new \InvalidArgumentException($option);
+            }
+        }
     }
 
     /**
@@ -106,7 +129,7 @@ class Client
     }
 
     /**
-     * @return Response
+     * @return array
      */
     public function getUser()
     {
@@ -114,7 +137,7 @@ class Client
     }
 
     /**
-     * @return Response
+     * @return array
      */
     public function getTransactions()
     {
@@ -124,7 +147,7 @@ class Client
     /**
      * @param string $id
      *
-     * @return Response
+     * @return array
      */
     public function getTransaction($id)
     {
@@ -134,7 +157,7 @@ class Client
     /**
      * @param string $id
      *
-     * @return bool
+     * @return array
      */
     public function abortTransaction($id)
     {
@@ -144,7 +167,7 @@ class Client
     /**
      * @param array $data
      *
-     * @return Response
+     * @return array
      */
     public function createTransaction(array $data)
     {
@@ -156,7 +179,7 @@ class Client
      */
     private function getDefaultHeaders()
     {
-        return ['content-type' => 'application/json', 'accept' => 'application/json'];
+        return ['Content-Type' => 'application/json', 'Accept' => $this->getAcceptHeader()];
     }
 
     /**
@@ -200,9 +223,9 @@ class Client
             return $this->links[$resource]['href'];
         }
 
-        $uri = "/api/{$this->version}/{$resource}";
+        $uri = "/api/{$resource}";
 
-        return (false === is_null($append)) ? "$uri/$append" : $uri;
+        return (false === is_null($append)) ? "{$uri}/{$append}" : $uri;
     }
 
     /**
