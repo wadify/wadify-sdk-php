@@ -1,4 +1,4 @@
-# wadify-sdk-php - Version 1.0.6
+# wadify-sdk-php - Version 1.0.8
 
 [![@wadifytech on Twitter](http://img.shields.io/badge/twitter-%40wadifytech-blue.svg?style=flat)](https://twitter.com/wadifytech)
 [![Build Status](https://travis-ci.org/wadify/wadify-sdk-php.svg?branch=master)](https://travis-ci.org/wadify/wadify-sdk-php)

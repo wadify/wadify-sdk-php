@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.8 - 2016-09-23
+
+* API routes changed (removed /api/)
+
 ## 1.0.7 - 2016-08-02
 
 * Changing version in the url
