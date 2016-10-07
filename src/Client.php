@@ -223,7 +223,7 @@ class Client
             return $this->links[$resource]['href'];
         }
 
-        $uri = "/api/{$resource}";
+        $uri = "/{$resource}";
 
         return (false === is_null($append)) ? "{$uri}/{$append}" : $uri;
     }
