@@ -161,7 +161,7 @@ class Client
      */
     public function abortTransaction($id)
     {
-        return $this->request('PATCH', 'transactions', $id.'/abort');
+        return $this->request('PATCH', 'transactions', $id);
     }
 
     /**

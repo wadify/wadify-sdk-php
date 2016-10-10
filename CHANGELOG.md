@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.9 - 2016-10-07
+
+* Updating abort transaction append
+
 ## 1.0.8 - 2016-09-23
 
 * API routes changed (removed /api/)
